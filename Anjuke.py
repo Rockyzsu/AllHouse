@@ -28,9 +28,9 @@ class CrawlHouse():
             'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)',
             'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Trident/4.0; SE 2.X MetaSr 1.0; SE 2.X MetaSr 1.0; .NET CLR 2.0.50727; SE 2.X MetaSr 1.0)']
 
-        self.user_agent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)"
+        #self.user_agent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)"
         cookie_read=open('cookie').read().strip()
-        self.headers = {"user-agent": self.user_agent,'cookie':cookie_read}
+        self.headers = {'cookie':cookie_read}
 
     def query(self,city,kw):
         #kw=欧陆经典
@@ -79,10 +79,10 @@ class CrawlHouse():
 
     #获取某个城市的所有小区
     def getAllCommunity(self,cityLink,NextPage, f):
-        #user_agent = random.choice(self.my_userAgent)
-        #headers = {'User-Agent': user_agent}
+        user_agent = random.choice(self.my_userAgent)
+        headers = {'User-Agent': user_agent}
         NextUrl=cityLink+NextPage
-        s=requests.get(url=NextUrl,headers=self.headers,timeout=5)
+        s=requests.get(url=NextUrl,headers=headers,timeout=5)
         print s.status_code
         tree=etree.HTML(s.text)
 
@@ -115,7 +115,7 @@ class CrawlHouse():
 
             #user_agent = random.choice(self.my_userAgent)
             #headers = {'User-Agent': user_agent}
-            s = requests.get(url=cityLink+detailPage_lnk, headers=self.headers, timeout=5)
+            s = requests.get(url=cityLink+detailPage_lnk, headers=headers, timeout=5)
             # print s.text
             t2 = etree.HTML(s.text)
             basic_info = t2.xpath('//dl[@class="basic-parms-mod"]')[0]
@@ -186,11 +186,17 @@ class CrawlHouse():
 
     #获取所有小区
     def getAllCityCommunity(self):
-        all_city=self.getCity()
+        #all_city=self.getCity()
+        with open('city_list.txt','r') as fp:
+            all_list=fp.readlines()
+            print all_list
+            all_city=map(lambda x:x.split('\t'),all_list)
+            #print all_city
+
         for i in all_city:
-            print "Getting city ", i[0]
+            print "Getting city ", i[0],i[1]
             self.f = codecs.open(i[0]+'.txt', 'a', encoding='utf-8')
-            self.getAllCommunity(i[1],'/community/p1/', self.f)
+            self.getAllCommunity(i[1].strip(),'/community/p1/', self.f)
             self.f.close()
 
     def saveCity(self):
