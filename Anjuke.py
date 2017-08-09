@@ -126,6 +126,18 @@ class CrawlHouse():
             tree_page=etree.HTML(s.text)
 
 
+    def getCity(self):
+        url='https://www.anjuke.com/sy-city.html'
+        s=requests.get(url=url,headers=self.headers)
+        tree=etree.HTML(s.text)
+        node=tree.xpath('//div[@class="city_list"]')
+        for i in node:
+            x= i.xpath('.//a/text()')
+            y= i.xpath('.//a/@href')
+            for a in range(len(x)):
+                print x[a],y[a]
+
+
 def main():
     obj=CrawlHouse()
     #obj.getPageDetail()
@@ -142,5 +154,12 @@ def main():
         final_data.append(q.get())
 
 
+
+def testcase():
+    obj=CrawlHouse()
+    obj.getCity()
+
+
 if __name__=="__main__":
-    main()
+    #main()
+    testcase()
