@@ -142,6 +142,5 @@ def main():
         final_data.append(q.get())
 
 
-
 if __name__=="__main__":
     main()
