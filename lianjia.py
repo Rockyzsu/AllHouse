@@ -1,8 +1,6 @@
 # coding: utf-8
 import Queue
 import random
-import re
-
 import chardet
 import requests
 import urllib
@@ -32,67 +30,15 @@ class CrawlHouse():
 
         self.user_agent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)"
         cookie_read=open('cookie').read().strip()
-
-        self.headers = {"user-agent": self.user_agent}
-        #self.headers = {"user-agent": self.user_agent,'cookie':cookie_read}
-
-    def query(self,city,kw):
-        #kw=欧陆经典
-        kw=urllib.quote(kw)
-
-        #url='https://shenzhen.anjuke.com/sale/rd1/?from=zjsr&kw=%s' %kw
-        url='https://%s.anjuke.com/sale/rd1/?from=zjsr&kw=%s' %(city,kw)
-        s=requests.get(url=url,headers=self.headers,timeout=5)
-        print s.status_code
-        tree=etree.HTML(s.text )
-        #title=tree.xpath('//a')
-        t1=tree.xpath('//div[@class="search-lessresult div-border"]')[0]
-        #print t1
-        price=t1.xpath('.//em[@class="price"]/text()')[0]
-        print price
-        detailPage_lnk=t1.xpath('.//a[@class="comm-detail "]/@href')[0]
-        s = requests.get(url=detailPage_lnk, headers=self.headers,timeout=5)
-        #print s.text
-        t2=etree.HTML(s.text)
-        basic_info=t2.xpath('//dl[@class="basic-parms-mod"]')[0]
-        wuye_type=basic_info.xpath('.//dt/text()')
-        dict_k=[]
-        dict_v=[]
-        dict_k.append(u'小区名字:   ')
-        dict_v.append(kw)
-        dict_k.append(u'均价:  ')
-        dict_v.append(price)
-        for x in wuye_type:
-            #print x
-            dict_k.append(x)
-        wuye_detail=basic_info.xpath('.//dd/text()')
-        for x in wuye_detail:
-            #print x
-            dict_v.append(x)
-
-        detail_dict=zip(dict_k,dict_v)
-        print detail_dict
-
-        #物业类型
-        #总建面积
-        #建造年代
-        #容积率
-        #开发商
-        #物业公司
-        return detail_dict
+        self.headers = {"user-agent": self.user_agent,'cookie':cookie_read}
 
     #获取某个城市的所有小区  简单信息
-    def getAllCommunity_simple(self,cityLink,NextPage, f,proxies):
+    def getAllCommunity_simple(self,cityLink,NextPage, f):
         #user_agent = random.choice(self.my_userAgent)
         #headers = {'User-Agent': user_agent}
         NextUrl=cityLink+NextPage
         s=requests.get(url=NextUrl,headers=self.headers,timeout=5)
         print s.status_code
-        p=re.compile(u'请输入图片中的验证码')
-        if p.findall(s.text):
-            print "需要手动输入验证码"
-            raw_input("打开浏览器，输入验证码后按Enter确认键继续")
-
         tree=etree.HTML(s.text)
 
         #getEach:
@@ -132,10 +78,6 @@ class CrawlHouse():
             #headers = {'User-Agent': user_agent}
             s = requests.get(url=cityLink+detailPage_lnk, headers=self.headers, timeout=5)
             # print s.text
-            p = re.compile(u'请输入图片中的验证码')
-            if p.findall(s.text):
-                print "需要手动输入验证码"
-                raw_input("打开浏览器，输入验证码后按Enter确认键继续")
             t2 = etree.HTML(s.text)
             basic_info = t2.xpath('//dl[@class="basic-parms-mod"]')[0]
             wuye_type = basic_info.xpath('.//dt/text()')
@@ -173,35 +115,32 @@ class CrawlHouse():
             self.getAllCommunity(cityLink,nextPageNum,f)
 
             # 获取某个城市的所有小区 详细信息
-    def getAllCommunity(self, cityLink, NextPage, f,proxies):
+    #def getAllCommunity(self, cityLink, NextPage, f):
+    def getAllCommunity(self, cityLink, NextPage, f):
                 # user_agent = random.choice(self.my_userAgent)
                 # headers = {'User-Agent': user_agent}
                 NextUrl = cityLink + NextPage
-                s = requests.get(url=NextUrl, headers=self.headers, timeout=15,proxies=proxies)
-                p = re.compile(u'请输入图片中的验证码')
-                if p.findall(s.text):
-                    print "需要手动输入验证码"
-                    raw_input("打开浏览器，输入验证码后按Enter确认键继续")
-                    s = requests.get(url=NextUrl, headers=self.headers, timeout=15,proxies=proxies)
+                s = requests.get(url=NextUrl, headers=self.headers, timeout=5)
                 print s.status_code
                 tree = etree.HTML(s.text)
 
                 # getEach:
 
-                all_list = tree.xpath('//div[@_soj="xqlb"]')
+                all_list = tree.xpath('//li[@class="clear xiaoquListItem"]')
 
                 for each in all_list:
 
                     dict_k = []
                     dict_v = []
-                    name = each.xpath('.//a[@hidefocus="true"]/@title')[0]
+                    name = each.xpath('.//div/@class="title"/a/text()')[0]
                     print name
                     # address=each.xpath('.//address/text()')[0].strip()
                     # print address
-                    f.write(name)
-                    f.write('\t')
+                    #f.write(name)
+                    #f.write('\t')
                     # build_data=each.xpath('.//p[@class="date"]/text()')[0].strip()
                     # print build_data
+                    '''
                     try:
                         price = each.xpath('.//strong/text()')[0]
                         print price
@@ -221,17 +160,8 @@ class CrawlHouse():
 
                     # user_agent = random.choice(self.my_userAgent)
                     # headers = {'User-Agent': user_agent}
-                    try:
-                        s = requests.get(url=cityLink + detailPage_lnk, headers=self.headers, timeout=15,proxies=proxies)
-                    except Exception,e:
-                        print e
-                        return
+                    s = requests.get(url=cityLink + detailPage_lnk, headers=self.headers, timeout=5)
                     # print s.text
-                    p = re.compile(u'请输入图片中的验证码')
-                    if p.findall(s.text):
-                        print "需要手动输入验证码"
-                        raw_input("打开浏览器，输入验证码后按Enter确认键继续")
-                        s = requests.get(url=cityLink + detailPage_lnk, headers=self.headers, timeout=15,proxies=proxies)
                     t2 = etree.HTML(s.text)
                     basic_info = t2.xpath('//dl[@class="basic-parms-mod"]')[0]
                     wuye_type = basic_info.xpath('.//dt/text()')
@@ -250,7 +180,8 @@ class CrawlHouse():
                         f.write('\t')
 
                         dict_v.append(x.encode('utf-8'))
-
+                    '''
+                    '''
                     detail_dict = zip(dict_k, dict_v)
                     print detail_dict
                     # df=DataFrame(dict(detail_dict),index=[0])
@@ -264,51 +195,9 @@ class CrawlHouse():
                     nextPageLnk = nextPage[0]
                     print nextPageLnk
                     nextPageNum = nextPageLnk.split(cityLink)[1]
-                    self.getAllCommunity(cityLink, nextPageNum, f,proxies)
-
-    #waste
-    def getPageDetail(self):
-        url='https://shenzhen.anjuke.com/sale/?kw=%E6%AC%A7%E9%99%86%E7%BB%8F%E5%85%B8&from=xlts_mc&k_comm_id=95393'
-        s=requests.get(url=url,headers=self.headers)
-        print s.status_code
-        #print s.text
-        tree=etree.HTML(s.text)
-        link=tree.xpath('//a[@class="comm-detail "]/@href')
-        #print link
-        if len(link)!=0:
-            lnk=link[0]
-            print lnk
-            s=requests.get(url=lnk,headers=self.headers)
-            tree_page=etree.HTML(s.text)
-    #异常处理
-    def ExceptionHandle(self):
-        url='https://shenzhen.anjuke.com/community/p1/'
-        session=requests.session()
-        proxies={
-            'http':'http://114.217.241.162:8118'
-        }
-
-        s=session.get(url=url,headers=self.headers)
-        #r=requests.get(url=url,headers=self.headers)
-        print s.cookies
-        #print s.status_code
-        print s.text
-        p=re.compile(u'请输入图片中的验证码')
-        if p.findall(s.text):
-            print "需要手动输入验证码"
-
-        num=int(round(random.random() * 1000))
-        url='https://www.anjuke.com/v3/ajax/captcha/newimage?id='+str(num)
-        s=session.get(url=url,headers=self.headers)
-        #切换cookie
-        with open('captha.png','wb') as f:
-            f.write(s.content)
-
-
-
-
-
-    #得到所有城市
+                    self.getAllCommunity(cityLink, nextPageNum, f)
+                '''
+        #得到所有城市
     def getCity(self):
         url='https://www.anjuke.com/sy-city.html'
         s=requests.get(url=url,headers=self.headers)
@@ -332,12 +221,11 @@ class CrawlHouse():
             print all_list
             all_city=map(lambda x:x.split('\t'),all_list)
             #print all_city
-        #proxies={'http':'http://122.72.32.73:80'}
-        proxies={'http': '180.105.126.75:8118'}
+
         for i in all_city:
             print "Getting city ", i[0],i[1]
             self.f = codecs.open(i[0].decode('utf-8')+'.txt', 'a', encoding='utf-8')
-            self.getAllCommunity(i[1].strip(),'/community/p1/', self.f,proxies)
+            self.getAllCommunity(i[1].strip(),'/community/p1/', self.f)
             self.f.close()
 
     def saveCity(self):
@@ -352,37 +240,12 @@ class CrawlHouse():
 
 def main():
     obj=CrawlHouse()
-    #obj.getPageDetail()
-    '''
-    data=obj.query('shenzhen','万科四季花城(一期)')
-    for x in data:
-        print x[0],x[1]
-    '''
-    q=Queue.Queue()
-    obj.getAllCommunity('https://shenzhen.anjuke.com/community/p1/',q)
-    print "Done"
-    final_data=[]
-    while not q.empty():
-        final_data.append(q.get())
+    f=''
+    obj.getAllCommunity('https://sz.lianjia.com','/ershoufang/pg2/',f)
 
-def testcase():
-    obj=CrawlHouse()
-    #obj.saveCity()
-    #q = Queue.Queue()
-    obj.getAllCityCommunity()
-    #obj.getAllCommunity('https://shenzhen.anjuke.com/community/p1/')
-    #print "Done"
-    #obj.saveCity()
-    #obj.ExceptionHandle()
-    '''
-    final_data=[]
-    while not q.empty():
-        final_data.append(q.get())
 
-    for i in final_data:
-        for x in i:
-            print x[0],x[1]
-    '''
+
+
 if __name__=="__main__":
-    #main()
-    testcase()
+    main()
+    #testcase()
